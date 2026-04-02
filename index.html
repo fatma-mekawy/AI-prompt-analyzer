@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Prompt Analyzer</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0f1117;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border-bottom: 1px solid #334155;
+            padding: 1.25rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        header h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #f8fafc;
+        }
+
+        header span {
+            font-size: 1.6rem;
+        }
+
+        .container {
+            max-width: 860px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tab-btn {
+            padding: 0.5rem 1.2rem;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #1e293b;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+        }
+
+        /* Card */
+        .card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card label {
+            display: block;
+            font-size: 0.8rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.4rem;
+        }
+
+        textarea {
+            width: 100%;
+            background: #0f1117;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e2e8f0;
+            padding: 0.9rem;
+            font-size: 0.95rem;
+            resize: vertical;
+            min-height: 120px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus {
+            border-color: #6366f1;
+        }
+
+        input[type="text"] {
+            background: #0f1117;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e2e8f0;
+            padding: 0.5rem 0.9rem;
+            font-size: 0.9rem;
+            outline: none;
+            width: 220px;
+        }
+
+        input[type="text"]:focus {
+            border-color: #6366f1;
+        }
+
+        .row {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .row label {
+            margin-bottom: 0.3rem;
+        }
+
+        button.primary {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 0.65rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        button.primary:hover {
+            background: #4f46e5;
+        }
+
+        button.primary:disabled {
+            background: #475569;
+            cursor: not-allowed;
+        }
+
+        /* Voice tab */
+        .voice-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 0;
+        }
+
+        #recordBtn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid #6366f1;
+            background: #1e293b;
+            color: #6366f1;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #recordBtn.recording {
+            background: #ef4444;
+            border-color: #ef4444;
+            color: white;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.08);
+            }
+        }
+
+        #recordStatus {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        /* Results */
+        .result-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .result-card.visible {
+            display: block;
+        }
+
+        .result-card h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #64748b;
+            margin-bottom: 0.8rem;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .badge.safe {
+            background: #166534;
+            color: #86efac;
+        }
+
+        .badge.danger {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.4rem;
+        }
+
+        .tag {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            padding: 0.3rem 0.65rem;
+            font-size: 0.82rem;
+            color: #94a3b8;
+        }
+
+        .step-list {
+            list-style: none;
+            counter-reset: step;
+        }
+
+        .step-list li {
+            counter-increment: step;
+            padding: 0.5rem 0.5rem 0.5rem 2.2rem;
+            position: relative;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            border-left: 2px solid #334155;
+            margin-bottom: 0.3rem;
+        }
+
+        .step-list li::before {
+            content: counter(step);
+            position: absolute;
+            left: -12px;
+            top: 6px;
+            width: 22px;
+            height: 22px;
+            background: #6366f1;
+            border-radius: 50%;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+        }
+
+        .improved-box {
+            background: #0f1117;
+            border: 1px solid #22c55e55;
+            border-radius: 8px;
+            padding: 1rem;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #86efac;
+            white-space: pre-wrap;
+        }
+
+        .copy-btn {
+            margin-top: 0.6rem;
+            background: none;
+            border: 1px solid #334155;
+            color: #94a3b8;
+            padding: 0.3rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.82rem;
+        }
+
+        .copy-btn:hover {
+            background: #334155;
+        }
+
+        /* Spinner */
+        .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff44;
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error-msg {
+            color: #f87171;
+            background: #7f1d1d33;
+            border: 1px solid #7f1d1d;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        /* History panel */
+        .history-toggle {
+            cursor: pointer;
+            font-size: 0.8rem;
+            color: #6366f1;
+            text-decoration: underline;
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+
+        #historyPanel {
+            display: none;
+        }
+
+        .history-msg {
+            padding: 0.4rem 0;
+            border-bottom: 1px solid #1e293b;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        .history-msg.user {
+            color: #c7d2fe;
+        }
+
+        .history-msg.assistant {
+            color: #86efac;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <span>🧠</span>
+        <h1>AI Prompt Analyzer</h1>
+    </header>
+
+    <div class="container">
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('text')">✏️ Text</button>
+            <button class="tab-btn" onclick="showTab('voice')">🎙️ Voice</button>
+            <button class="tab-btn" onclick="showTab('history')">📜 History</button>
+        </div>
+
+        <!-- TEXT TAB -->
+        <div id="tab-text">
+            <div class="card">
+                <label>Your Prompt</label>
+                <textarea id="promptInput"
+                    placeholder="Type your prompt here... e.g. 'Write a blog post about AI'"></textarea>
+                <div class="row">
+                    <div>
+                        <label>User ID (optional)</label>
+                        <input type="text" id="userId" value="user1" placeholder="user1" />
+                    </div>
+                    <button class="primary" id="analyzeBtn" onclick="analyzeText()">
+                        <span class="spinner" id="textSpinner"></span>
+                        <span>Analyze & Improve</span>
+                    </button>
+                </div>
+            </div>
+            <div class="error-msg" id="textError"></div>
+        </div>
+
+        <!-- VOICE TAB -->
+        <div id="tab-voice" style="display:none">
+            <div class="card">
+                <div class="voice-area">
+                    <button id="recordBtn" onclick="toggleRecord()">🎙️</button>
+                    <span id="recordStatus">Click to start recording</span>
+                    <audio id="audioPlayback" controls style="display:none; width:100%"></audio>
+                    <button class="primary" id="sendVoiceBtn" style="display:none" onclick="sendVoice()">
+                        <span class="spinner" id="voiceSpinner"></span>
+                        <span>Analyze Voice Prompt</span>
+                    </button>
+                </div>
+            </div>
+            <div class="error-msg" id="voiceError"></div>
+        </div>
+
+        <!-- HISTORY TAB -->
+        <div id="tab-history" style="display:none">
+            <div class="card">
+                <label>User ID</label>
+                <div class="row">
+                    <input type="text" id="historyUserId" value="user1" />
+                    <button class="primary" onclick="loadHistory()">Load History</button>
+                    <button class="primary" style="background:#ef4444" onclick="clearHistory()">Clear</button>
+                </div>
+                <div id="historyContent" style="margin-top:1rem; color:#64748b; font-size:0.9rem">Enter a user ID and
+                    click Load.</div>
+            </div>
+        </div>
+
+        <!-- RESULTS (shared) -->
+        <div class="result-card" id="resultInjection">
+            <h3>🛡️ Injection Analysis</h3>
+            <div id="injectionBadge"></div>
+            <div class="tag-list" id="injectionDetails"></div>
+        </div>
+
+        <div class="result-card" id="resultReasoning">
+            <h3>🧠 Chain-of-Thought Reasoning</h3>
+            <ul class="step-list" id="reasoningSteps"></ul>
+        </div>
+
+        <div class="result-card" id="resultIssues">
+            <h3>⚠️ Issues Found</h3>
+            <div class="tag-list" id="issuesList"></div>
+        </div>
+
+        <div class="result-card" id="resultSuggestions">
+            <h3>💡 Suggestions</h3>
+            <div class="tag-list" id="suggestionsList"></div>
+        </div>
+
+        <div class="result-card" id="resultImproved">
+            <h3>✨ Improved Prompt</h3>
+            <div class="improved-box" id="improvedPrompt"></div>
+            <button class="copy-btn" onclick="copyImproved()">📋 Copy</button>
+        </div>
+
+    </div>
+
+    <script>
+        const API = "http://localhost:8000";
+        let mediaRecorder, audioChunks = [], audioBlob;
+
+        function showTab(name) {
+            ['text', 'voice', 'history'].forEach(t => {
+                document.getElementById(`tab-${t}`).style.display = t === name ? 'block' : 'none';
+            });
+            document.querySelectorAll('.tab-btn').forEach((b, i) => {
+                b.classList.toggle('active', ['text', 'voice', 'history'][i] === name);
+            });
+        }
+
+        function showError(id, msg) {
+            const el = document.getElementById(id);
+            el.textContent = msg;
+            el.style.display = 'block';
+        }
+        function hideError(id) { document.getElementById(id).style.display = 'none'; }
+
+        function setLoading(spinnerId, btnId, loading) {
+            document.getElementById(spinnerId).style.display = loading ? 'inline-block' : 'none';
+            if (btnId) document.getElementById(btnId).disabled = loading;
+        }
+
+        function renderResults(data) {
+            // Injection
+            const inj = document.getElementById('resultInjection');
+            inj.classList.add('visible');
+            document.getElementById('injectionBadge').innerHTML = data.is_injection
+                ? `<span class="badge danger">⚠️ Injection Detected</span>`
+                : `<span class="badge safe">✅ No Injection Detected</span>`;
+            const injDet = document.getElementById('injectionDetails');
+            injDet.innerHTML = (data.injection_details || []).map(d => `<span class="tag">${d}</span>`).join('');
+
+            // Reasoning
+            const steps = data.reasoning_steps || [];
+            if (steps.length > 0) {
+                document.getElementById('resultReasoning').classList.add('visible');
+                document.getElementById('reasoningSteps').innerHTML = steps.map(s => `<li>${s}</li>`).join('');
+            }
+
+            // Issues
+            const issues = data.issues || [];
+            if (issues.length > 0) {
+                document.getElementById('resultIssues').classList.add('visible');
+                document.getElementById('issuesList').innerHTML = issues.map(i => `<span class="tag">⚠️ ${i}</span>`).join('');
+            }
+
+            // Suggestions
+            const suggs = data.suggestions || [];
+            if (suggs.length > 0) {
+                document.getElementById('resultSuggestions').classList.add('visible');
+                document.getElementById('suggestionsList').innerHTML = suggs.map(s => `<span class="tag">💡 ${s}</span>`).join('');
+            }
+
+            // Improved prompt
+            document.getElementById('resultImproved').classList.add('visible');
+            document.getElementById('improvedPrompt').textContent = data.improved_prompt || '';
+        }
+
+        function clearResults() {
+            ['resultInjection', 'resultReasoning', 'resultIssues', 'resultSuggestions', 'resultImproved'].forEach(id => {
+                document.getElementById(id).classList.remove('visible');
+            });
+        }
+
+        async function analyzeText() {
+            const prompt = document.getElementById('promptInput').value.trim();
+            const userId = document.getElementById('userId').value.trim() || 'default';
+            if (!prompt) { showError('textError', 'Please enter a prompt.'); return; }
+            hideError('textError');
+            clearResults();
+            setLoading('textSpinner', 'analyzeBtn', true);
+
+            try {
+                const res = await fetch(`${API}/analyze`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, user_id: userId })
+                });
+                const data = await res.json();
+                if (!res.ok) { showError('textError', data.detail || 'Server error'); return; }
+                renderResults(data);
+            } catch (e) {
+                showError('textError', `Connection failed. Is the backend running at ${API}?`);
+            } finally {
+                setLoading('textSpinner', 'analyzeBtn', false);
+            }
+        }
+
+        async function toggleRecord() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                return;
+            }
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioChunks = [];
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                mediaRecorder.onstop = () => {
+                    audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const url = URL.createObjectURL(audioBlob);
+                    const audio = document.getElementById('audioPlayback');
+                    audio.src = url;
+                    audio.style.display = 'block';
+                    document.getElementById('sendVoiceBtn').style.display = 'flex';
+                    document.getElementById('recordStatus').textContent = 'Recording ready. Click to re-record or send below.';
+                    document.getElementById('recordBtn').classList.remove('recording');
+                    document.getElementById('recordBtn').textContent = '🎙️';
+                    stream.getTracks().forEach(t => t.stop());
+                };
+                mediaRecorder.start();
+                document.getElementById('recordBtn').classList.add('recording');
+                document.getElementById('recordBtn').textContent = '⏹️';
+                document.getElementById('recordStatus').textContent = 'Recording... click to stop';
+                document.getElementById('sendVoiceBtn').style.display = 'none';
+                document.getElementById('audioPlayback').style.display = 'none';
+            } catch (e) {
+                showError('voiceError', 'Microphone access denied. Please allow microphone access.');
+            }
+        }
+
+        async function sendVoice() {
+            if (!audioBlob) return;
+            hideError('voiceError');
+            clearResults();
+            setLoading('voiceSpinner', null, true);
+
+            const formData = new FormData();
+            formData.append('file', audioBlob, 'recording.wav');
+            formData.append('user_id', document.getElementById('userId').value || 'default');
+
+            try {
+                const res = await fetch(`${API}/analyze/voice`, { method: 'POST', body: formData });
+                const data = await res.json();
+                if (!res.ok) { showError('voiceError', data.detail || 'Server error'); return; }
+
+                // Show transcription note
+                const transNote = document.createElement('div');
+                transNote.style = 'margin-bottom:1rem; padding:0.75rem; background:#1e3a5f; border-radius:8px; font-size:0.9rem; color:#93c5fd;';
+                transNote.innerHTML = `<strong>📝 Transcribed:</strong> "${data.transcribed_text}"`;
+                document.getElementById('resultInjection').before(transNote);
+
+                renderResults(data);
+            } catch (e) {
+                showError('voiceError', `Connection failed. Is the backend running at ${API}?`);
+            } finally {
+                setLoading('voiceSpinner', null, false);
+            }
+        }
+
+        async function loadHistory() {
+            const userId = document.getElementById('historyUserId').value.trim() || 'default';
+            const res = await fetch(`${API}/history/${userId}`);
+            const data = await res.json();
+            const msgs = data.messages || [];
+            const container = document.getElementById('historyContent');
+            if (msgs.length === 0) {
+                container.innerHTML = '<span style="color:#64748b">No history found.</span>';
+                return;
+            }
+            container.innerHTML = msgs.map(m =>
+                `<div class="history-msg ${m.role}"><strong>${m.role}:</strong> ${m.content.substring(0, 200)}${m.content.length > 200 ? '...' : ''}</div>`
+            ).join('');
+        }
+
+        async function clearHistory() {
+            const userId = document.getElementById('historyUserId').value.trim() || 'default';
+            await fetch(`${API}/history/${userId}`, { method: 'DELETE' });
+            document.getElementById('historyContent').innerHTML = '<span style="color:#64748b">History cleared.</span>';
+        }
+
+        function copyImproved() {
+            const text = document.getElementById('improvedPrompt').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                btn.textContent = '✅ Copied!';
+                setTimeout(() => btn.textContent = '📋 Copy', 2000);
+            });
+        }
+
+        // Enter key shortcut
+        document.addEventListener('keydown', e => {
+            if (e.ctrlKey && e.key === 'Enter') analyzeText();
+        });
+    </script>
+</body>
+
+</html>
