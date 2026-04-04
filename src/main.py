@@ -1,5 +1,5 @@
 """
-AI Prompt Analyzer - Main FastAPI Application
+ Main FastAPI Application
 """
 import time
 import logging
@@ -21,6 +21,8 @@ from src.voice import transcribe_audio
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
+
 app = FastAPI(
     title="AI Prompt Analyzer",
     description="Analyzes and optimizes prompts for better LLM responses",
@@ -34,7 +36,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# In-memory rate limiting (simple per-IP counter)
+# In-memory rate limiting 
 _rate_limit: dict = {}
 RATE_LIMIT_MAX = 20       # max requests
 RATE_LIMIT_WINDOW = 60    # per minute
