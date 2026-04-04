@@ -43,8 +43,8 @@ uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 
 ### 4. Open the frontend
 
-Open `frontend/index.html` in your browser.  
-Or serve it: `python -m http.server 3000 --directory frontend`
+Open `index.html` in your browser.  
+Or serve it: `python -m http.server 3000 --directory index.html`
 
 ### 5. Run tests
 
